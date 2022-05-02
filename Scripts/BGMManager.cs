@@ -55,7 +55,6 @@ namespace BGM
 
         private static void MakeDictionary()
         {
-            
             foreach (BGM_SObj data in _staticBGMListSObj.bgmDatas)
             {
                 if (_bgmDic.ContainsKey(data.clipName) == false)
@@ -64,7 +63,7 @@ namespace BGM
                     _bgmDic.Add(data.clipName, bgmDS);
                 }
             }
-    }
+        }
 
         // BGMを再生
         public static void BGMPlay(string bgmName)
@@ -75,9 +74,16 @@ namespace BGM
                 return;
             }
 
+            _audioSource.mute = false;
             _audioSource.clip = _bgmDic[bgmName].clip;
             _audioSource.volume = _bgmDic[bgmName].clipVolume * _volume;
             _audioSource.Play();
+        }
+
+        // BGMを停止
+        public static void BGMStop()
+        {
+            _audioSource.mute = true;
         }
 
         // 基本ボリュームを変更

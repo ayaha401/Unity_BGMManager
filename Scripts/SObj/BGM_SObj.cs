@@ -13,8 +13,9 @@ namespace BGM
         [Header("âπó ")]
         [Range(0.0f, 1.0f)] public float clipVolume = 1.0f;
 
-        [Header("âπåπñº")]
-        public string clipName;
+        [Header("âπåπê›íË")]
+        public bool playOnAwake = true;
+        public bool loop = true;
     }
 }
 

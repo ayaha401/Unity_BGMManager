@@ -6,97 +6,97 @@ namespace BGM
 {
     public struct BGM_DS
     {
-        public AudioClip clip;
+        public AudioSource audioSource;
+        public string audioName;
         public float clipVolume;
-        public string clipName;
-
-        public BGM_DS(AudioClip source, string name, float volume)
+        
+        public BGM_DS(AudioSource source, string name, float volume)
         {
-            clip = source;
-            clipName = name;
+            audioSource = source;
+            audioName = name;
             clipVolume = volume;
         }
     }
 
     public class BGMManager : MonoBehaviour
     {
-        [SerializeField] private BGMListSObj _bgmList = null;
-
-        private static BGMListSObj _staticBGMListSObj = null;
-        private static Dictionary<string, BGM_DS> _bgmDic = new Dictionary<string, BGM_DS>();
-
-        private static AudioSource _audioSource = null;
-
-        private static bool _managerMaked = false;
-        private static float _volume = 0.5f;
+        private static GameObject rootObj = null;
+        private static Dictionary<string, BGM_DS> bgmDS_Dic = new Dictionary<string, BGM_DS>();
+        private static float volume = 0.5f;
 
         private void Awake()
         {
-            if (_managerMaked == false)
-            {
-                DontDestroyOnLoad(this);
-                _managerMaked = true;
-            }
-            else
-            {
-                Destroy(this.gameObject);
-                return;
-            }
-
-            _staticBGMListSObj = _bgmList;
-            MakeDictionary();
-            _audioSource = GetComponent<AudioSource>();
+            rootObj = this.gameObject;
         }
 
-        void Start()
+        // AudioSourceの初期状態を設定
+        private static void AudioSourceInit(AudioSource source, BGM_SObj data)
         {
-        
+            source.clip = data.audioClip;
+            source.volume = data.clipVolume;
+            source.playOnAwake = data.playOnAwake;
+            source.loop = data.loop;
         }
 
-        private static void MakeDictionary()
+        // ディクショナリにDSを追加
+        private static void AddAudioSObj(BGM_SObj seData, GameObject soundPlayerObj, Dictionary<string, BGM_DS> _seDS_Dic)
         {
-            foreach (BGM_SObj data in _staticBGMListSObj.bgmDatas)
+            AudioSource newAudioSource = soundPlayerObj.AddComponent<AudioSource>();
+            AudioSourceInit(newAudioSource, seData);
+            BGM_DS ds = new BGM_DS(newAudioSource, seData.name, seData.clipVolume);
+            _seDS_Dic.Add(seData.name, ds);
+        }
+
+        // AudioSourceを生成
+        public static void GenerateAudioSource(BGMListSObj list)
+        {
+            foreach (BGM_SObj data in list.bgmDatas)
             {
-                if (_bgmDic.ContainsKey(data.clipName) == false)
-                {
-                    BGM_DS bgmDS = new BGM_DS(data.audioClip, data.clipName, data.clipVolume);
-                    _bgmDic.Add(data.clipName, bgmDS);
-                }
+                if (bgmDS_Dic.ContainsKey(data.name)) continue;
+
+                AddAudioSObj(data, rootObj, bgmDS_Dic);
             }
         }
 
-        // BGMを再生
-        public static void BGMPlay(string bgmName)
+        // 重複しないで再生
+        public static void AudioPlay(string audioName)
         {
-            if (_bgmDic.ContainsKey(bgmName) == false)
-            {
-                Debug.Log("対応するstring : " + bgmName + "がありません");
-                return;
-            }
+            if (!bgmDS_Dic.ContainsKey(audioName)) { return; }
 
-            _audioSource.mute = false;
-            _audioSource.clip = _bgmDic[bgmName].clip;
-            _audioSource.volume = _bgmDic[bgmName].clipVolume * _volume;
-            _audioSource.Play();
+            AudioSource source = bgmDS_Dic[audioName].audioSource;
+            source.volume = volume * bgmDS_Dic[audioName].clipVolume;
+            source.Play();
         }
 
-        // BGMを停止
-        public static void BGMStop()
+        // 重複して再生可能
+        public static void AudioPlayOneShot(string audioName)
         {
-            _audioSource.mute = true;
+            if (!bgmDS_Dic.ContainsKey(audioName)) { return; }
+
+            AudioSource source = bgmDS_Dic[audioName].audioSource;
+            source.volume = volume * bgmDS_Dic[audioName].clipVolume;
+            source.PlayOneShot(source.clip);
+        }
+
+        // 再生を停止させる
+        public static void AudioStop(string audioName)
+        {
+            if (!bgmDS_Dic.ContainsKey(audioName)) { return; }
+            AudioSource source = bgmDS_Dic[audioName].audioSource;
+            source.Stop();
         }
 
         // 基本ボリュームを変更
-        public static void SetVolume(float volume)
+        public static void SetVolume(float _volume)
         {
-            volume = Mathf.Clamp(volume, 0.0f, 1.0f);
-            _volume = volume;
+            float clampVolume = Mathf.Clamp(_volume, 0.0f, 1.0f);
+            volume = clampVolume;
         }
 
         // 基本ボリュームを送る
         public static float GetVolume()
         {
-            return _volume;
+            return volume;
         }
     }
 }

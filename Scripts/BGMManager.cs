@@ -23,10 +23,20 @@ namespace BGM
         private static GameObject rootObj = null;
         private static Dictionary<string, BGM_DS> bgmDS_Dic = new Dictionary<string, BGM_DS>();
         private static float volume = 0.5f;
+        private static bool isMaked = false;
 
         private void Awake()
         {
+            if (isMaked)
+            {
+                Destroy(this.gameObject);
+                return;
+            }
+
+            isMaked = true;
             rootObj = this.gameObject;
+            
+            DontDestroyOnLoad(this.gameObject);
         }
 
         // AudioSource‚Ì‰Šúó‘Ô‚ğİ’è
